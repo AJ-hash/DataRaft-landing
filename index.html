@@ -167,6 +167,209 @@
   </section>
 
   <!-- Additional role-specific sections (data engineer, ml researcher, etc.) go here -->
+  <section id="data-engineer" style="background: var(--role-gradient-0);">
+  <h2>For Data Engineers</h2>
+  <p>
+    DataRaft makes your pipelines resilient to schema drift by allowing semantic-level abstraction.
+    Instead of tying queries and jobs to brittle field names, DataRaft lets you define intent.
+  </p>
+
+  <h3>Basic Usage (Schema-Aware ETL)</h3>
+  <div class="code-editor">
+    <div class="code-header">etl_basic.py</div>
+    <pre><code class="language-python animated-code">
+from dataraft import DataRaftClient
+from sqlalchemy import create_engine
+import pandas as pd
+
+# Configuration
+JDBC_URL = "jdbc:dataraft://localhost:5440"
+AUTH_TOKEN = "your_token"
+WAREHOUSE_URI = "postgresql://user:pass@host:5432/db"
+
+# Connect to DataRaft
+client = DataRaftClient(jdbc_url=JDBC_URL, auth_token=AUTH_TOKEN)
+
+# Query priority orders
+df = client.query("SELECT * FROM Orders WHERE priority = TRUE").to_pandas()
+
+# Load to warehouse
+engine = create_engine(WAREHOUSE_URI)
+df.to_sql("orders_priority", con=engine, if_exists="append", index=False)
+    </code></pre>
+  </div>
+
+  <h3>Advanced Usage (Semantic Schema Drift Resolution)</h3>
+  <div class="code-editor">
+    <div class="code-header">etl_advanced.py</div>
+    <pre><code class="language-python animated-code">
+from dataraft import DataRaftClient
+from sqlalchemy import create_engine, inspect
+import pandas as pd
+
+# Configuration
+JDBC_URL = "jdbc:dataraft://localhost:5440"
+AUTH_TOKEN = "your_token"
+WAREHOUSE_URI = "postgresql://user:pass@host:5432/db"
+TARGET_TABLE = "priority_order_metrics"
+
+# Clients
+client = DataRaftClient(jdbc_url=JDBC_URL, auth_token=AUTH_TOKEN)
+engine = create_engine(WAREHOUSE_URI)
+inspector = inspect(engine)
+
+# Step 1: Get old schema
+if TARGET_TABLE in inspector.get_table_names():
+    old_semantics = client.get_semantic_schema(table_name=TARGET_TABLE)
+else:
+    old_semantics = None
+
+# Step 2: New semantic query
+query = "What is the average delivery time for priority orders shipped to customers in California?"
+result = client.query(query)
+df_new = result.to_pandas()
+new_semantics = result.metadata["resolved_fields"]
+
+# Step 3: Compare and act
+if old_semantics and set(old_semantics.keys()) == set(new_semantics.keys()):
+    df_new.rename(columns={v: k for k, v in new_semantics.items()}, inplace=True)
+    df_new.to_sql(TARGET_TABLE, con=engine, if_exists="append", index=False)
+else:
+    version = 2
+    new_table = f"{TARGET_TABLE}_v{version}"
+    while new_table in inspector.get_table_names():
+        version += 1
+        new_table = f"{TARGET_TABLE}_v{version}"
+
+    old_df = (
+        pd.read_sql_table(TARGET_TABLE, con=engine)
+        if old_semantics else pd.DataFrame(columns=df_new.columns)
+    )
+    for col in set(df_new.columns) - set(old_df.columns):
+        old_df[col] = None
+    for col in set(old_df.columns) - set(df_new.columns):
+        df_new[col] = None
+
+    combined = pd.concat([old_df[df_new.columns], df_new])
+    combined.to_sql(new_table, con=engine, if_exists="replace", index=False)
+    print(f"Migrated to new versioned table: {new_table}")
+    </code></pre>
+  </div>
+</section>
+<section id="ml-researcher" style="background: var(--role-gradient-1);">
+  <h2>For Machine Learning Researchers</h2>
+  <p>
+    Ask questions about production data directly in natural language and train models with confidence.
+    DataRaft bridges your research code with live operational data using semantic guarantees,
+    ensuring reproducibility and safety — even when data evolves under the hood.
+  </p>
+
+  <h3>Training a Model with Semantic Query Data</h3>
+  <div class="code-editor">
+    <div class="code-header">train_model.py</div>
+    <pre><code class="language-python animated-code">
+from dataraft import DataRaftClient
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+
+# Configuration
+JDBC_URL = "jdbc:dataraft://localhost:5440"
+AUTH_TOKEN = "your_token_here"
+
+# Connect to DataRaft
+client = DataRaftClient(jdbc_url=JDBC_URL, auth_token=AUTH_TOKEN)
+
+# Semantic natural language query
+query = "Show me customer purchase events in Q1 2024 with labels for churn"
+df = client.query(query).to_pandas()
+
+# Prepare features and target
+features = df.drop(columns=["churn_label"])
+target = df["churn_label"]
+
+# Train a model
+model = RandomForestClassifier()
+model.fit(features, target)
+
+# Save model
+import joblib
+joblib.dump(model, "rf_churn_model.pkl")
+    </code></pre>
+  </div>
+</section>
+<section id="business-analyst" style="background: var(--role-gradient-2);">
+  <h2>I am a Business Analyst</h2>
+  <p>
+    Build dashboards that don’t break. With DataRaft, even if a data source schema evolves,
+    your dashboard filters and KPIs keep working. Ask questions directly in natural language and embed
+    semantic queries in tools like Power BI, enabling true self-serve BI across the org.
+  </p>
+
+  <div class="dashboard-simulation">
+    <div class="textbox-query">"Show me revenue by product category in March 2024"</div>
+    <div class="table-response">
+      <table>
+        <thead>
+          <tr><th>Category</th><th>Revenue</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Electronics</td><td>$120,000</td></tr>
+          <tr><td>Apparel</td><td>$87,000</td></tr>
+          <tr><td>Home Goods</td><td>$65,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<section id="product-owner" style="background: var(--role-gradient-3);">
+  <h2>For Product Owners</h2>
+  <p>
+    Track cohort behavior, feature adoption, and conversion funnels without relying on analyst bandwidth.
+    DataRaft lets you ask business-level questions and get data back instantly across tools and systems.
+    Visualize user journeys and adoption patterns directly from semantic intent queries.
+  </p>
+
+  <div class="dashboard-simulation">
+    <div class="textbox-query">"Show me weekly retention of new users by platform since last release"</div>
+    <div class="table-response">
+      <table>
+        <thead>
+          <tr><th>Week</th><th>Web</th><th>iOS</th><th>Android</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Week 1</td><td>72%</td><td>69%</td><td>64%</td></tr>
+          <tr><td>Week 2</td><td>55%</td><td>51%</td><td>46%</td></tr>
+          <tr><td>Week 3</td><td>43%</td><td>38%</td><td>34%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<section id="cto" style="background: var(--role-gradient-4);">
+  <h2>For CTOs</h2>
+  <p>
+    Turn your data infrastructure into a monetizable asset.
+    With DataRaft’s marketplace, datasets and semantic pipelines become shareable,
+    traceable, and revenue-generating. Cross-org interoperability through semantic federation
+    means reduced integration time, increased reuse, and measurable ROI.
+  </p>
+
+  <div class="dashboard-simulation">
+    <div class="textbox-query">"List external subscribers to our enriched usage dataset"</div>
+    <div class="table-response">
+      <table>
+        <thead>
+          <tr><th>Company</th><th>Subscription Plan</th><th>Monthly Revenue</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>HealthIQ</td><td>Premium</td><td>$4,500</td></tr>
+          <tr><td>GreenAnalytics</td><td>Standard</td><td>$2,300</td></tr>
+          <tr><td>RetailZoom</td><td>Basic</td><td>$950</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
 
   <div class="signup">
     <h2>Request Early Access</h2>
@@ -174,6 +377,7 @@
     <br>
     <button>Request Early-Access</button>
   </div>
+  
 
   <script>
     const roles = [
