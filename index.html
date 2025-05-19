@@ -53,6 +53,68 @@
       font-size: 2rem;
       margin-bottom: 1rem;
     }
+    lottie-player {
+      margin: 2rem auto;
+      display: block;
+      border-radius: 12px;
+    }
+    .signup {
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+    .signup input[type="email"] {
+      padding: 12px;
+      width: 300px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 1rem;
+    }
+    .signup button {
+      padding: 12px 24px;
+      background-color: #1565c0;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .link-anchor {
+      text-decoration: underline;
+      color: #90caf9;
+      cursor: pointer;
+    }
+    .dashboard-simulation {
+      background-color: #fff1;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-top: 2rem;
+      font-family: monospace;
+    }
+    .textbox-query {
+      background: #f0f4f8;
+      color: #004080;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-family: 'Segoe UI', sans-serif;
+      font-weight: 500;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .table-response table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+    }
+    .table-response th, .table-response td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+      background-color: #fff2;
+      color: #fff;
+    }
+    .table-response thead {
+      background-color: #444;
+    }
     .code-editor {
       background-color: #1e1e1e;
       border-radius: 8px;
@@ -85,58 +147,8 @@
       from { opacity: 0; transform: translateX(-10px); }
       to { opacity: 1; transform: translateX(0); }
     }
-    .dashboard-simulation {
-      background-color: #fff1;
-      padding: 1rem;
-      border-radius: 12px;
-      margin-top: 2rem;
-      font-family: monospace;
-    }
-    .textbox-query {
-      background: #222;
-      color: #0f0;
-      padding: 0.8rem;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-      font-size: 1.1rem;
-    }
-    .table-response table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 1rem;
-    }
-    .table-response th, .table-response td {
-      border: 1px solid #ccc;
-      padding: 0.5rem;
-      text-align: left;
-      background-color: #fff2;
-      color: #fff;
-    }
-    .table-response thead {
-      background-color: #444;
-    }
-    .signup {
-      text-align: center;
-      padding: 3rem 2rem;
-    }
-    .signup input[type="email"] {
-      padding: 12px;
-      width: 300px;
-      border-radius: 8px;
-      border: none;
-      margin-bottom: 1rem;
-    }
-    .signup button {
-      padding: 12px 24px;
-      background-color: #1565c0;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
   </style>
-</head>
-<body>
+</head><body>
   <header>DataRaft</header>
   <div class="typing-container">
     I am a <span id="typed" class="typed-text"></span>
@@ -151,17 +163,24 @@
       <br><br>
       More than a query interface, DataRaft is a <strong>data marketplace</strong>. Organizations can publish and monetize
       datasets and pipelines while consumers can discover, subscribe to, and federate across external data assets with full semantic alignment.
+      DataRaft not only understands your intent — it safeguards it across schema changes, naming inconsistencies, and organizational silos.
     </p>
   </section>
 
-  <!-- For Data Engineers -->
+  <!-- Sections (Data Engineer, ML Researcher, Business Analyst, etc.) would follow here... -->
+    <!-- For Data Engineers -->
   <section id="data-engineer" style="background: var(--role-gradient-0);">
     <h2>For Data Engineers</h2>
-    <p>DataRaft makes your pipelines resilient to schema drift by allowing semantic-level abstraction. Instead of tying queries and jobs to brittle field names, DataRaft lets you define intent.</p>
+    <p>DataRaft makes your pipelines resilient to schema drift by allowing semantic-level abstraction.
+    Instead of tying queries and jobs to brittle field names, DataRaft lets you define intent.</p>
+
     <h3>Basic Usage (Schema-Aware ETL)</h3>
     <div class="code-editor">
       <div class="code-header">etl_basic.py</div>
       <pre><code class="language-python animated-code">
+from dataraft import DataRaftClient
+from sqlalchemy import create_engine
+
 # Connect to DataRaft
 client = DataRaftClient(jdbc_url="...", auth_token="...")
 df = client.query("SELECT * FROM Orders WHERE priority = TRUE").to_pandas()
@@ -171,11 +190,16 @@ engine = create_engine("warehouse://...")
 df.to_sql("orders_priority", con=engine, if_exists="append", index=False)
       </code></pre>
     </div>
+
     <h3>Advanced Usage (Semantic Schema Drift Resolution)</h3>
     <div class="code-editor">
       <div class="code-header">etl_advanced.py</div>
       <pre><code class="language-python animated-code">
+from dataraft import DataRaftClient
+from sqlalchemy import create_engine
+
 # Fetch semantic schema
+client = DataRaftClient(jdbc_url="...", auth_token="...")
 sem = client.get_semantic_schema("orders")
 priority_field = sem["OrderPriority"]
 
@@ -189,13 +213,20 @@ migrate_if_schema_changed(df, target_table="orders_priority_v2")
     </div>
   </section>
 
-  <!-- For ML Researchers -->
+  <!-- For Machine Learning Researchers -->
   <section id="ml-researcher" style="background: var(--role-gradient-1);">
     <h2>For Machine Learning Researchers</h2>
-    <p>Ask questions about production data directly in natural language and train models with confidence.</p>
+    <p>Ask questions about production data directly in natural language and train models with confidence.
+    DataRaft bridges your research code with live operational data using semantic guarantees, ensuring reproducibility and safety,
+    even when data evolves under the hood.</p>
+
+    <h3>Train a Model from Production Data</h3>
     <div class="code-editor">
       <div class="code-header">train_model.py</div>
       <pre><code class="language-python animated-code">
+from dataraft import DataRaftClient
+from sklearn.ensemble import RandomForestClassifier
+
 # Initialize DataRaft client
 client = DataRaftClient(jdbc_url="...", auth_token="...")
 
@@ -203,17 +234,18 @@ client = DataRaftClient(jdbc_url="...", auth_token="...")
 df = client.query("Show me customer purchase events in Q1 2024 with labels for churn").to_pandas()
 
 # Train model
-from sklearn.ensemble import RandomForestClassifier
+features = df.drop(columns=["churn_label"])
 model = RandomForestClassifier()
-model.fit(df[features], df['churn_label'])
+model.fit(features, df["churn_label"])
       </code></pre>
     </div>
   </section>
-
-  <!-- For Business Analysts -->
+    <!-- For Business Analysts -->
   <section id="business-analyst" style="background: var(--role-gradient-2);">
     <h2>I am a Business Analyst</h2>
-    <p>Build dashboards that don’t break. Ask questions in natural language and see results live.</p>
+    <p>Build dashboards that don’t break. With DataRaft, even if a data source schema evolves, your dashboard filters and KPIs keep working.
+    Ask questions directly in natural language and embed semantic queries in tools like Power BI, enabling true self-serve BI across the org.</p>
+
     <div class="dashboard-simulation">
       <div class="textbox-query">"Show me revenue by product category in March 2024"</div>
       <div class="table-response">
@@ -232,7 +264,10 @@ model.fit(df[features], df['churn_label'])
   <!-- For Product Owners -->
   <section id="product-owner" style="background: var(--role-gradient-3);">
     <h2>For Product Owners</h2>
-    <p>Track user retention, feature adoption, and release outcomes — in seconds.</p>
+    <p>Track cohort behavior, feature adoption, and conversion funnels without relying on analyst bandwidth.
+    DataRaft lets you ask business-level questions and get data back instantly, across tools and data systems.
+    Visualize user journeys and adoption patterns directly from semantic intent queries.</p>
+
     <div class="dashboard-simulation">
       <div class="textbox-query">"Show me weekly retention of new users by platform since last release"</div>
       <div class="table-response">
@@ -251,7 +286,10 @@ model.fit(df[features], df['churn_label'])
   <!-- For CTOs -->
   <section id="cto" style="background: var(--role-gradient-4);">
     <h2>For CTOs</h2>
-    <p>Turn your internal data infrastructure into a revenue-generating product via the DataRaft marketplace.</p>
+    <p>Turn your data infrastructure into a monetizable asset. With DataRaft’s marketplace, datasets and semantic pipelines become shareable,
+    traceable, and revenue-generating. Cross-org interoperability through semantic federation means reduced integration time,
+    increased reuse, and measurable ROI.</p>
+
     <div class="dashboard-simulation">
       <div class="textbox-query">"List external subscribers to our enriched usage dataset"</div>
       <div class="table-response">
@@ -325,3 +363,4 @@ model.fit(df[features], df['churn_label'])
   </script>
 </body>
 </html>
+
