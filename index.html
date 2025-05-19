@@ -178,16 +178,48 @@
     <div class="code-editor">
       <div class="code-header">etl_basic.py</div>
       <pre><code class="language-python animated-code">
-from dataraft import DataRaftClient
-from sqlalchemy import create_engine
+			from dataraft import DataRaftClient
+from sqlalchemy import create_engine, inspect, text
+import pandas as pd
 
-# Connect to DataRaft
-client = DataRaftClient(jdbc_url="...", auth_token="...")
-df = client.query("SELECT * FROM Orders WHERE priority = TRUE").to_pandas()
+# --- Connect to DataRaft and Warehouse ---
+client = DataRaftClient(jdbc_url="jdbc:dataraft://localhost:5440", auth_token="xyz")
+engine = create_engine("snowflake://USER:PASSWORD@ACCOUNT/DB/SCHEMA?warehouse=ETL_WH")
+inspector = inspect(engine)
 
-# Connect to warehouse
-engine = create_engine("warehouse://...")
-df.to_sql("orders_priority", con=engine, if_exists="append", index=False)
+# --- NL Query ---
+query = "What is the average delivery time for priority orders shipped to customers in California?"
+df_new = client.query(query).to_pandas()
+target_table = "priority_order_metrics"
+
+# --- Basic Schema Comparison (Exact Match) ---
+if target_table in inspector.get_table_names():
+    with engine.connect() as conn:
+        existing_cols = conn.execute(text(f"SELECT * FROM {target_table} LIMIT 0")).keys()
+
+    new_cols = df_new.columns.tolist()
+    if set(existing_cols) == set(new_cols):
+        print("Exact schema match. Appending.")
+        df_new.to_sql(target_table, con=engine, if_exists="append", index=False)
+    else:
+        version = 2
+        while f"{target_table}_v{version}" in inspector.get_table_names():
+            version += 1
+        new_table = f"{target_table}_v{version}"
+        old_df = pd.read_sql_table(target_table, con=engine)
+
+        # Align schemas (insert NaNs where needed)
+        for col in set(new_cols) - set(old_df.columns):
+            old_df[col] = None
+        for col in set(old_df.columns) - set(new_cols):
+            df_new[col] = None
+
+        combined = pd.concat([old_df[df_new.columns], df_new], ignore_index=True)
+        combined.to_sql(new_table, con=engine, if_exists="replace", index=False)
+        print(f"Migrated to new table: {new_table}")
+else:
+    print("Creating new table.")
+    df_new.to_sql(target_table, con=engine, if_exists="replace", index=False)
       </code></pre>
     </div>
 
