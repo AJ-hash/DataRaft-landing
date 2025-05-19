@@ -228,19 +228,83 @@ else:
       <div class="code-header">etl_advanced.py</div>
       <pre><code class="language-python animated-code">
 from dataraft import DataRaftClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
+import pandas as pd
 
-# Fetch semantic schema
-client = DataRaftClient(jdbc_url="...", auth_token="...")
-sem = client.get_semantic_schema("orders")
-priority_field = sem["OrderPriority"]
+# ------------------------
+# Configurations
+# ------------------------
+JDBC_URL = "jdbc:dataraft://localhost:5440"
+AUTH_TOKEN = "your_token_here"
+WAREHOUSE_URI = "postgresql://user:password@host:5432/warehouse"
+TARGET_TABLE = "priority_order_metrics"
 
-# Execute semantic ETL
-query = f"SELECT * FROM Orders WHERE {priority_field} = TRUE"
-df = client.query(query).to_pandas()
+# ------------------------
+# Initialize Clients
+# ------------------------
+client = DataRaftClient(jdbc_url=JDBC_URL, auth_token=AUTH_TOKEN)
+engine = create_engine(WAREHOUSE_URI)
+inspector = inspect(engine)
 
-# Align schema and migrate if needed
-migrate_if_schema_changed(df, target_table="orders_priority_v2")
+# ------------------------
+# Step 1: Fetch Semantic Schema of Target Table
+# ------------------------
+if TARGET_TABLE in inspector.get_table_names():
+    old_semantics = client.get_semantic_schema(table_name=TARGET_TABLE)
+else:
+    old_semantics = None
+
+# ------------------------
+# Step 2: Execute Semantic Query via Natural Language
+# ------------------------
+nl_query = "What is the average delivery time for priority orders shipped to customers in California?"
+query_result = client.query(nl_query)
+df_new = query_result.to_pandas()
+new_semantics = query_result.metadata["resolved_fields"]
+
+# ------------------------
+# Step 3: Schema Resolution Based on Semantics
+# ------------------------
+if old_semantics and set(old_semantics.keys()) == set(new_semantics.keys()):
+    # Match columns to semantic names for consistency
+    semantic_columns = list(new_semantics.keys())
+    column_map = {v: k for k, v in new_semantics.items()}
+    df_new = df_new.rename(columns=column_map)
+    
+    print("Semantic schema matched. Appending to existing table.")
+    df_new.to_sql(TARGET_TABLE, con=engine, if_exists="append", index=False)
+
+else:
+    # ------------------------
+    # Step 4: Migrate to Versioned Table
+    # ------------------------
+    print("Semantic schema mismatch. Creating versioned table.")
+
+    # Create new versioned table name
+    version = 2
+    new_table_name = f"{TARGET_TABLE}_v{version}"
+    while new_table_name in inspector.get_table_names():
+        version += 1
+        new_table_name = f"{TARGET_TABLE}_v{version}"
+
+    # Load old data if available
+    if old_semantics:
+        old_df = pd.read_sql_table(TARGET_TABLE, con=engine)
+        old_df = old_df.rename(columns={col: old_semantics.get(col, col) for col in old_df.columns})
+    else:
+        old_df = pd.DataFrame(columns=df_new.columns)
+
+    # Align both DataFrames on semantic fields
+    for col in set(df_new.columns) - set(old_df.columns):
+        old_df[col] = None
+    for col in set(old_df.columns) - set(df_new.columns):
+        df_new[col] = None
+
+    # Merge and write to new versioned table
+    combined_df = pd.concat([old_df[df_new.columns], df_new], ignore_index=True)
+    combined_df.to_sql(new_table_name, con=engine, if_exists="replace", index=False)
+
+    print(f"Data migrated to new versioned table: {new_table_name}")
       </code></pre>
     </div>
   </section>
