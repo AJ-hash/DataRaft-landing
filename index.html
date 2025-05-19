@@ -177,7 +177,7 @@
     <h3>Basic Usage (Schema-Aware ETL)</h3>
     <div class="code-editor">
       <div class="code-header">etl_basic.py</div>
-      <pre><code class="language-python animated-code">
+      <code class="language-python animated-code">
 			from dataraft import DataRaftClient
 from sqlalchemy import create_engine, inspect, text
 import pandas as pd
@@ -220,13 +220,13 @@ if target_table in inspector.get_table_names():
 else:
     print("Creating new table.")
     df_new.to_sql(target_table, con=engine, if_exists="replace", index=False)
-      </code></pre>
+      </code>
     </div>
 
     <h3>Advanced Usage (Semantic Schema Drift Resolution)</h3>
     <div class="code-editor">
       <div class="code-header">etl_advanced.py</div>
-      <pre><code class="language-python animated-code">
+      <code class="language-python animated-code">
 from dataraft import DataRaftClient
 from sqlalchemy import create_engine, inspect, text
 import pandas as pd
@@ -305,7 +305,7 @@ else:
     combined_df.to_sql(new_table_name, con=engine, if_exists="replace", index=False)
 
     print(f"Data migrated to new versioned table: {new_table_name}")
-      </code></pre>
+      </code>
     </div>
   </section>
 
@@ -319,7 +319,7 @@ else:
     <h3>Train a Model from Production Data</h3>
     <div class="code-editor">
       <div class="code-header">train_model.py</div>
-      <pre><code class="language-python animated-code">
+      <code class="language-python animated-code">
 from dataraft import DataRaftClient
 from sklearn.ensemble import RandomForestClassifier
 
@@ -333,7 +333,7 @@ df = client.query("Show me customer purchase events in Q1 2024 with labels for c
 features = df.drop(columns=["churn_label"])
 model = RandomForestClassifier()
 model.fit(features, df["churn_label"])
-      </code></pre>
+      </code>
     </div>
   </section>
     <!-- For Business Analysts -->
