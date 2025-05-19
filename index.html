@@ -82,7 +82,7 @@
       color: #90caf9;
       cursor: pointer;
     }
-    .dashboard-simulation {
+        .dashboard-simulation {
       background-color: #fff1;
       padding: 1rem;
       border-radius: 12px;
@@ -140,21 +140,21 @@
     }
     .animated-code span {
       display: block;
-      animation: reveal 0.4s ease-in forwards;
+      animation: reveal 0.4s ease forwards;
       opacity: 0;
     }
     @keyframes reveal {
-      from { opacity: 0; transform: translateX(-10px); }
-      to { opacity: 1; transform: translateX(0); }
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
-</head><body>
+</head>
+<body>
   <header>DataRaft</header>
   <div class="typing-container">
     I am a <span id="typed" class="typed-text"></span>
   </div>
-
-  <section style="background: linear-gradient(135deg, #1c1c1c, #2c3e50);">
+    <section style="background: linear-gradient(135deg, #1c1c1c, #2c3e50);">
     <h2 style="text-align:center;">What is DataRaft?</h2>
     <p style="max-width: 800px; margin: auto; font-size: 1.1rem; line-height: 1.6;">
       DataRaft is a <strong>mixed-language federated query engine</strong> powered by a <strong>semantic metadata catalog</strong>.
@@ -163,243 +163,10 @@
       <br><br>
       More than a query interface, DataRaft is a <strong>data marketplace</strong>. Organizations can publish and monetize
       datasets and pipelines while consumers can discover, subscribe to, and federate across external data assets with full semantic alignment.
-      DataRaft not only understands your intent — it safeguards it across schema changes, naming inconsistencies, and organizational silos.
     </p>
   </section>
 
-  <!-- Sections (Data Engineer, ML Researcher, Business Analyst, etc.) would follow here... -->
-    <!-- For Data Engineers -->
-  <section id="data-engineer" style="background: var(--role-gradient-0);">
-    <h2>For Data Engineers</h2>
-    <p>DataRaft makes your pipelines resilient to schema drift by allowing semantic-level abstraction.
-    Instead of tying queries and jobs to brittle field names, DataRaft lets you define intent.</p>
-
-    <h3>Basic Usage (Schema-Aware ETL)</h3>
-    <div class="code-editor">
-      <div class="code-header">etl_basic.py</div>
-      <code class="language-python animated-code">
-			from dataraft import DataRaftClient
-from sqlalchemy import create_engine, inspect, text
-import pandas as pd
-
-# --- Connect to DataRaft and Warehouse ---
-client = DataRaftClient(jdbc_url="jdbc:dataraft://localhost:5440", auth_token="xyz")
-engine = create_engine("snowflake://USER:PASSWORD@ACCOUNT/DB/SCHEMA?warehouse=ETL_WH")
-inspector = inspect(engine)
-
-# --- NL Query ---
-query = "What is the average delivery time for priority orders shipped to customers in California?"
-df_new = client.query(query).to_pandas()
-target_table = "priority_order_metrics"
-
-# --- Basic Schema Comparison (Exact Match) ---
-if target_table in inspector.get_table_names():
-    with engine.connect() as conn:
-        existing_cols = conn.execute(text(f"SELECT * FROM {target_table} LIMIT 0")).keys()
-
-    new_cols = df_new.columns.tolist()
-    if set(existing_cols) == set(new_cols):
-        print("Exact schema match. Appending.")
-        df_new.to_sql(target_table, con=engine, if_exists="append", index=False)
-    else:
-        version = 2
-        while f"{target_table}_v{version}" in inspector.get_table_names():
-            version += 1
-        new_table = f"{target_table}_v{version}"
-        old_df = pd.read_sql_table(target_table, con=engine)
-
-        # Align schemas (insert NaNs where needed)
-        for col in set(new_cols) - set(old_df.columns):
-            old_df[col] = None
-        for col in set(old_df.columns) - set(new_cols):
-            df_new[col] = None
-
-        combined = pd.concat([old_df[df_new.columns], df_new], ignore_index=True)
-        combined.to_sql(new_table, con=engine, if_exists="replace", index=False)
-        print(f"Migrated to new table: {new_table}")
-else:
-    print("Creating new table.")
-    df_new.to_sql(target_table, con=engine, if_exists="replace", index=False)
-      </code>
-    </div>
-
-    <h3>Advanced Usage (Semantic Schema Drift Resolution)</h3>
-    <div class="code-editor">
-      <div class="code-header">etl_advanced.py</div>
-      <code class="language-python animated-code">
-from dataraft import DataRaftClient
-from sqlalchemy import create_engine, inspect, text
-import pandas as pd
-
-# ------------------------
-# Configurations
-# ------------------------
-JDBC_URL = "jdbc:dataraft://localhost:5440"
-AUTH_TOKEN = "your_token_here"
-WAREHOUSE_URI = "postgresql://user:password@host:5432/warehouse"
-TARGET_TABLE = "priority_order_metrics"
-
-# ------------------------
-# Initialize Clients
-# ------------------------
-client = DataRaftClient(jdbc_url=JDBC_URL, auth_token=AUTH_TOKEN)
-engine = create_engine(WAREHOUSE_URI)
-inspector = inspect(engine)
-
-# ------------------------
-# Step 1: Fetch Semantic Schema of Target Table
-# ------------------------
-if TARGET_TABLE in inspector.get_table_names():
-    old_semantics = client.get_semantic_schema(table_name=TARGET_TABLE)
-else:
-    old_semantics = None
-
-# ------------------------
-# Step 2: Execute Semantic Query via Natural Language
-# ------------------------
-nl_query = "What is the average delivery time for priority orders shipped to customers in California?"
-query_result = client.query(nl_query)
-df_new = query_result.to_pandas()
-new_semantics = query_result.metadata["resolved_fields"]
-
-# ------------------------
-# Step 3: Schema Resolution Based on Semantics
-# ------------------------
-if old_semantics and set(old_semantics.keys()) == set(new_semantics.keys()):
-    # Match columns to semantic names for consistency
-    semantic_columns = list(new_semantics.keys())
-    column_map = {v: k for k, v in new_semantics.items()}
-    df_new = df_new.rename(columns=column_map)
-    
-    print("Semantic schema matched. Appending to existing table.")
-    df_new.to_sql(TARGET_TABLE, con=engine, if_exists="append", index=False)
-
-else:
-    # ------------------------
-    # Step 4: Migrate to Versioned Table
-    # ------------------------
-    print("Semantic schema mismatch. Creating versioned table.")
-
-    # Create new versioned table name
-    version = 2
-    new_table_name = f"{TARGET_TABLE}_v{version}"
-    while new_table_name in inspector.get_table_names():
-        version += 1
-        new_table_name = f"{TARGET_TABLE}_v{version}"
-
-    # Load old data if available
-    if old_semantics:
-        old_df = pd.read_sql_table(TARGET_TABLE, con=engine)
-        old_df = old_df.rename(columns={col: old_semantics.get(col, col) for col in old_df.columns})
-    else:
-        old_df = pd.DataFrame(columns=df_new.columns)
-
-    # Align both DataFrames on semantic fields
-    for col in set(df_new.columns) - set(old_df.columns):
-        old_df[col] = None
-    for col in set(old_df.columns) - set(df_new.columns):
-        df_new[col] = None
-
-    # Merge and write to new versioned table
-    combined_df = pd.concat([old_df[df_new.columns], df_new], ignore_index=True)
-    combined_df.to_sql(new_table_name, con=engine, if_exists="replace", index=False)
-
-    print(f"Data migrated to new versioned table: {new_table_name}")
-      </code>
-    </div>
-  </section>
-
-  <!-- For Machine Learning Researchers -->
-  <section id="ml-researcher" style="background: var(--role-gradient-1);">
-    <h2>For Machine Learning Researchers</h2>
-    <p>Ask questions about production data directly in natural language and train models with confidence.
-    DataRaft bridges your research code with live operational data using semantic guarantees, ensuring reproducibility and safety,
-    even when data evolves under the hood.</p>
-
-    <h3>Train a Model from Production Data</h3>
-    <div class="code-editor">
-      <div class="code-header">train_model.py</div>
-      <code class="language-python animated-code">
-from dataraft import DataRaftClient
-from sklearn.ensemble import RandomForestClassifier
-
-# Initialize DataRaft client
-client = DataRaftClient(jdbc_url="...", auth_token="...")
-
-# Query training data using natural language
-df = client.query("Show me customer purchase events in Q1 2024 with labels for churn").to_pandas()
-
-# Train model
-features = df.drop(columns=["churn_label"])
-model = RandomForestClassifier()
-model.fit(features, df["churn_label"])
-      </code>
-    </div>
-  </section>
-    <!-- For Business Analysts -->
-  <section id="business-analyst" style="background: var(--role-gradient-2);">
-    <h2>I am a Business Analyst</h2>
-    <p>Build dashboards that don’t break. With DataRaft, even if a data source schema evolves, your dashboard filters and KPIs keep working.
-    Ask questions directly in natural language and embed semantic queries in tools like Power BI, enabling true self-serve BI across the org.</p>
-
-    <div class="dashboard-simulation">
-      <div class="textbox-query">"Show me revenue by product category in March 2024"</div>
-      <div class="table-response">
-        <table>
-          <thead><tr><th>Category</th><th>Revenue</th></tr></thead>
-          <tbody>
-            <tr><td>Electronics</td><td>$120,000</td></tr>
-            <tr><td>Apparel</td><td>$87,000</td></tr>
-            <tr><td>Home Goods</td><td>$65,000</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- For Product Owners -->
-  <section id="product-owner" style="background: var(--role-gradient-3);">
-    <h2>For Product Owners</h2>
-    <p>Track cohort behavior, feature adoption, and conversion funnels without relying on analyst bandwidth.
-    DataRaft lets you ask business-level questions and get data back instantly, across tools and data systems.
-    Visualize user journeys and adoption patterns directly from semantic intent queries.</p>
-
-    <div class="dashboard-simulation">
-      <div class="textbox-query">"Show me weekly retention of new users by platform since last release"</div>
-      <div class="table-response">
-        <table>
-          <thead><tr><th>Week</th><th>Web</th><th>iOS</th><th>Android</th></tr></thead>
-          <tbody>
-            <tr><td>Week 1</td><td>72%</td><td>69%</td><td>64%</td></tr>
-            <tr><td>Week 2</td><td>55%</td><td>51%</td><td>46%</td></tr>
-            <tr><td>Week 3</td><td>43%</td><td>38%</td><td>34%</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- For CTOs -->
-  <section id="cto" style="background: var(--role-gradient-4);">
-    <h2>For CTOs</h2>
-    <p>Turn your data infrastructure into a monetizable asset. With DataRaft’s marketplace, datasets and semantic pipelines become shareable,
-    traceable, and revenue-generating. Cross-org interoperability through semantic federation means reduced integration time,
-    increased reuse, and measurable ROI.</p>
-
-    <div class="dashboard-simulation">
-      <div class="textbox-query">"List external subscribers to our enriched usage dataset"</div>
-      <div class="table-response">
-        <table>
-          <thead><tr><th>Company</th><th>Subscription Plan</th><th>Monthly Revenue</th></tr></thead>
-          <tbody>
-            <tr><td>HealthIQ</td><td>Premium</td><td>$4,500</td></tr>
-            <tr><td>GreenAnalytics</td><td>Standard</td><td>$2,300</td></tr>
-            <tr><td>RetailZoom</td><td>Basic</td><td>$950</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
+  <!-- Additional role-specific sections (data engineer, ml researcher, etc.) go here -->
 
   <div class="signup">
     <h2>Request Early Access</h2>
@@ -442,15 +209,20 @@ model.fit(features, df["churn_label"])
       setTimeout(typeRole, typing ? 120 : 50);
     }
     typeRole();
+  </script>
 
+  <script>
     document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".animated-code").forEach(block => {
-        const lines = block.innerText.trim().split('\\n');
+        const lines = block.textContent.trim().split('\\n');
         block.innerHTML = '';
         lines.forEach((line, i) => {
           const span = document.createElement('span');
           span.textContent = line;
-          span.style.animationDelay = `${i * 0.3}s`;
+          span.style.display = 'block';
+          span.style.opacity = 0;
+          span.style.animation = 'reveal 0.4s ease forwards';
+          span.style.animationDelay = `${i * 0.2}s`;
           block.appendChild(span);
         });
         hljs.highlightElement(block);
@@ -459,4 +231,3 @@ model.fit(features, df["churn_label"])
   </script>
 </body>
 </html>
-
