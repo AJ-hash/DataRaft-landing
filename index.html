@@ -1,214 +1,327 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>DataRaft</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-    <style>
-        :root {
-            --font: 'Helvetica Neue', sans-serif;
-            --role-gradient-0: linear-gradient(135deg, #004e92, #000428);
-            --role-gradient-1: linear-gradient(135deg, #667db6, #0082c8);
-            --role-gradient-2: linear-gradient(135deg, #396afc, #2948ff);
-            --role-gradient-3: linear-gradient(135deg, #43cea2, #185a9d);
-            --role-gradient-4: linear-gradient(135deg, #2193b0, #6dd5ed);
-        }
-
-        body {
-            margin: 0;
-            font-family: var(--font);
-            color: white;
-            background: black;
-            overflow-x: hidden;
-        }
-
-        .background-art {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 100%;
-            z-index: -2;
-            background: radial-gradient(circle, rgba(255,255,255,0.04) 10%, transparent 11%),
-                        radial-gradient(circle, rgba(255,255,255,0.04) 10%, transparent 11%);
-            background-size: 50px 50px;
-            background-position: 0 0, 25px 25px;
-            mix-blend-mode: screen;
-        }
-
-        header {
-            text-align: center;
-            font-size: 3rem;
-            font-weight: bold;
-            padding: 3rem 1rem 1rem;
-        }
-
-        .typing-container {
-            text-align: center;
-            font-size: 2rem;
-            margin-top: 1rem;
-            height: 60px;
-        }
-
-        .typed-text {
-            border-right: 3px solid white;
-            display: inline;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        section {
-            padding: 4rem 2rem;
-            border-radius: 16px;
-            margin: 3rem auto;
-            width: 85%;
-            max-width: 1000px;
-            transition: background 0.3s ease;
-        }
-
-        section h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        lottie-player {
-            margin: 2rem auto;
-            display: block;
-            border-radius: 12px;
-        }
-
-        .signup {
-            text-align: center;
-            padding: 3rem 2rem;
-        }
-
-        .signup input[type="email"] {
-            padding: 12px;
-            width: 300px;
-            border-radius: 8px;
-            border: none;
-            margin-bottom: 1rem;
-        }
-
-        .signup button {
-            padding: 12px 24px;
-            background-color: #1565c0;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .link-anchor {
-            text-decoration: underline;
-            color: #90caf9;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>DataRaft</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <style>
+    :root {
+      --font: 'Helvetica Neue', sans-serif;
+      --role-gradient-0: linear-gradient(135deg, #004e92, #000428);
+      --role-gradient-1: linear-gradient(135deg, #667db6, #0082c8);
+      --role-gradient-2: linear-gradient(135deg, #396afc, #2948ff);
+      --role-gradient-3: linear-gradient(135deg, #43cea2, #185a9d);
+      --role-gradient-4: linear-gradient(135deg, #2193b0, #6dd5ed);
+    }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: white;
+      background: black;
+      overflow-x: hidden;
+    }
+    header {
+      text-align: center;
+      font-size: 3rem;
+      font-weight: bold;
+      padding: 3rem 1rem 1rem;
+    }
+    .typing-container {
+      text-align: center;
+      font-size: 2rem;
+      margin-top: 1rem;
+      height: 60px;
+    }
+    .typed-text {
+      border-right: 3px solid white;
+      display: inline;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    section {
+      padding: 4rem 2rem;
+      border-radius: 16px;
+      margin: 3rem auto;
+      width: 85%;
+      max-width: 1000px;
+      transition: background 0.3s ease;
+    }
+    section h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .code-editor {
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      margin: 1rem 0;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 0 12px rgba(0,0,0,0.4);
+    }
+    .code-header {
+      background-color: #333;
+      padding: 8px 12px;
+      font-family: monospace;
+      color: #90caf9;
+      border-bottom: 1px solid #555;
+    }
+    .animated-code {
+      padding: 16px;
+      margin: 0;
+      font-family: "Fira Code", monospace;
+      white-space: pre;
+      overflow-x: auto;
+      display: block;
+    }
+    .animated-code span {
+      display: block;
+      animation: reveal 0.4s ease-in forwards;
+      opacity: 0;
+    }
+    @keyframes reveal {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .dashboard-simulation {
+      background-color: #fff1;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-top: 2rem;
+      font-family: monospace;
+    }
+    .textbox-query {
+      background: #222;
+      color: #0f0;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+    }
+    .table-response table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+    }
+    .table-response th, .table-response td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+      background-color: #fff2;
+      color: #fff;
+    }
+    .table-response thead {
+      background-color: #444;
+    }
+    .signup {
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+    .signup input[type="email"] {
+      padding: 12px;
+      width: 300px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 1rem;
+    }
+    .signup button {
+      padding: 12px 24px;
+      background-color: #1565c0;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-<div class="background-art"></div>
-
-<header>DataRaft</header>
-
-<div class="typing-container">
+  <header>DataRaft</header>
+  <div class="typing-container">
     I am a <span id="typed" class="typed-text"></span>
-</div>
+  </div>
 
-<section style="background: linear-gradient(135deg, #1c1c1c, #2c3e50);">
+  <section style="background: linear-gradient(135deg, #1c1c1c, #2c3e50);">
     <h2 style="text-align:center;">What is DataRaft?</h2>
     <p style="max-width: 800px; margin: auto; font-size: 1.1rem; line-height: 1.6;">
-        DataRaft is a <strong>mixed-language federated query engine</strong> powered by a <strong>semantic metadata catalog</strong>. 
-        It allows you to write queries in either SQL or natural language, and seamlessly retrieves, joins, and resolves data across 
-        structured and semi-structured sources, including cloud warehouses, object stores, and APIs.
-        <br><br>
-        More than a query interface, DataRaft is a <strong>data marketplace</strong>. Organizations can publish and monetize 
-        datasets and pipelines while consumers can discover, subscribe to, and federate across external data assets with full semantic alignment. 
-        DataRaft not only understands your intent — it safeguards it across schema changes, naming inconsistencies, and organizational silos.
+      DataRaft is a <strong>mixed-language federated query engine</strong> powered by a <strong>semantic metadata catalog</strong>.
+      It allows you to write queries in either SQL or natural language, and seamlessly retrieves, joins, and resolves data across
+      structured and semi-structured sources, including cloud warehouses, object stores, and APIs.
+      <br><br>
+      More than a query interface, DataRaft is a <strong>data marketplace</strong>. Organizations can publish and monetize
+      datasets and pipelines while consumers can discover, subscribe to, and federate across external data assets with full semantic alignment.
     </p>
-</section>
+  </section>
 
-<section id="data-engineer" style="background: var(--role-gradient-0);">
+  <!-- For Data Engineers -->
+  <section id="data-engineer" style="background: var(--role-gradient-0);">
     <h2>For Data Engineers</h2>
-    <p>DataRaft makes your pipelines resilient to schema drift by allowing semantic-level abstraction. Instead of tying queries and jobs to brittle field names, DataRaft lets you define intent. For example, if ‘priority_flag’ becomes ‘is_priority’, your queries still work.</p>
-    <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_jy6h88xz.json" background="transparent" speed="1" style="max-width:600px;" loop autoplay></lottie-player>
-</section>
+    <p>DataRaft makes your pipelines resilient to schema drift by allowing semantic-level abstraction. Instead of tying queries and jobs to brittle field names, DataRaft lets you define intent.</p>
+    <h3>Basic Usage (Schema-Aware ETL)</h3>
+    <div class="code-editor">
+      <div class="code-header">etl_basic.py</div>
+      <pre><code class="language-python animated-code">
+# Connect to DataRaft
+client = DataRaftClient(jdbc_url="...", auth_token="...")
+df = client.query("SELECT * FROM Orders WHERE priority = TRUE").to_pandas()
 
-<section id="ml-researcher" style="background: var(--role-gradient-1);">
+# Connect to warehouse
+engine = create_engine("warehouse://...")
+df.to_sql("orders_priority", con=engine, if_exists="append", index=False)
+      </code></pre>
+    </div>
+    <h3>Advanced Usage (Semantic Schema Drift Resolution)</h3>
+    <div class="code-editor">
+      <div class="code-header">etl_advanced.py</div>
+      <pre><code class="language-python animated-code">
+# Fetch semantic schema
+sem = client.get_semantic_schema("orders")
+priority_field = sem["OrderPriority"]
+
+# Execute semantic ETL
+query = f"SELECT * FROM Orders WHERE {priority_field} = TRUE"
+df = client.query(query).to_pandas()
+
+# Align schema and migrate if needed
+migrate_if_schema_changed(df, target_table="orders_priority_v2")
+      </code></pre>
+    </div>
+  </section>
+
+  <!-- For ML Researchers -->
+  <section id="ml-researcher" style="background: var(--role-gradient-1);">
     <h2>For Machine Learning Researchers</h2>
-    <p>Ask questions about production data directly in natural language and train models with confidence. DataRaft bridges your research code with live operational data using semantic guarantees, ensuring reproducibility and safety, even when data evolves under the hood.</p>
-    <lottie-player src="https://assets7.lottiefiles.com/packages/lf20_gnb3ui2m.json" background="transparent" speed="1" style="max-width:600px;" loop autoplay></lottie-player>
-</section>
+    <p>Ask questions about production data directly in natural language and train models with confidence.</p>
+    <div class="code-editor">
+      <div class="code-header">train_model.py</div>
+      <pre><code class="language-python animated-code">
+# Initialize DataRaft client
+client = DataRaftClient(jdbc_url="...", auth_token="...")
 
-<section id="business-analyst" style="background: var(--role-gradient-2);">
+# Query training data using natural language
+df = client.query("Show me customer purchase events in Q1 2024 with labels for churn").to_pandas()
+
+# Train model
+from sklearn.ensemble import RandomForestClassifier
+model = RandomForestClassifier()
+model.fit(df[features], df['churn_label'])
+      </code></pre>
+    </div>
+  </section>
+
+  <!-- For Business Analysts -->
+  <section id="business-analyst" style="background: var(--role-gradient-2);">
     <h2>I am a Business Analyst</h2>
-    <p>Build dashboards that don’t break. With DataRaft, even if a data source schema evolves, your dashboard filters and KPIs keep working. Ask questions directly in natural language and embed semantic queries in tools like Power BI, enabling true self-serve BI across the org.</p>
-    <lottie-player src="https://assets6.lottiefiles.com/packages/lf20_myejiggj.json" background="transparent" speed="1" style="max-width:600px;" loop autoplay></lottie-player>
-</section>
+    <p>Build dashboards that don’t break. Ask questions in natural language and see results live.</p>
+    <div class="dashboard-simulation">
+      <div class="textbox-query">"Show me revenue by product category in March 2024"</div>
+      <div class="table-response">
+        <table>
+          <thead><tr><th>Category</th><th>Revenue</th></tr></thead>
+          <tbody>
+            <tr><td>Electronics</td><td>$120,000</td></tr>
+            <tr><td>Apparel</td><td>$87,000</td></tr>
+            <tr><td>Home Goods</td><td>$65,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
-<section id="product-owner" style="background: var(--role-gradient-3);">
+  <!-- For Product Owners -->
+  <section id="product-owner" style="background: var(--role-gradient-3);">
     <h2>For Product Owners</h2>
-    <p>Track cohort behavior, feature adoption, and conversion funnels without relying on analyst bandwidth. DataRaft lets you ask business-level questions and get data back instantly, across tools and data systems. Visualize user journeys and adoption patterns directly from semantic intent queries.</p>
-</section>
+    <p>Track user retention, feature adoption, and release outcomes — in seconds.</p>
+    <div class="dashboard-simulation">
+      <div class="textbox-query">"Show me weekly retention of new users by platform since last release"</div>
+      <div class="table-response">
+        <table>
+          <thead><tr><th>Week</th><th>Web</th><th>iOS</th><th>Android</th></tr></thead>
+          <tbody>
+            <tr><td>Week 1</td><td>72%</td><td>69%</td><td>64%</td></tr>
+            <tr><td>Week 2</td><td>55%</td><td>51%</td><td>46%</td></tr>
+            <tr><td>Week 3</td><td>43%</td><td>38%</td><td>34%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
-<section id="cto" style="background: var(--role-gradient-4);">
+  <!-- For CTOs -->
+  <section id="cto" style="background: var(--role-gradient-4);">
     <h2>For CTOs</h2>
-    <p>Turn your data infrastructure into a monetizable asset. With DataRaft’s marketplace, datasets and semantic pipelines become shareable, traceable, and revenue-generating. Cross-org interoperability through semantic federation means reduced integration time, increased reuse, and measurable ROI.</p>
-    <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_jy6h88xz.json" background="transparent" speed="1" style="max-width:600px;" loop autoplay></lottie-player>
-</section>
+    <p>Turn your internal data infrastructure into a revenue-generating product via the DataRaft marketplace.</p>
+    <div class="dashboard-simulation">
+      <div class="textbox-query">"List external subscribers to our enriched usage dataset"</div>
+      <div class="table-response">
+        <table>
+          <thead><tr><th>Company</th><th>Subscription Plan</th><th>Monthly Revenue</th></tr></thead>
+          <tbody>
+            <tr><td>HealthIQ</td><td>Premium</td><td>$4,500</td></tr>
+            <tr><td>GreenAnalytics</td><td>Standard</td><td>$2,300</td></tr>
+            <tr><td>RetailZoom</td><td>Basic</td><td>$950</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
-<div class="signup">
+  <div class="signup">
     <h2>Request Early Access</h2>
     <input type="email" value="example@email.com" />
     <br>
     <button>Request Early-Access</button>
-</div>
+  </div>
 
-<script>
-const roles = [
-    { title: "Data Engineer", id: "data-engineer" },
-    { title: "Machine Learning Researcher", id: "ml-researcher" },
-    { title: "Business Analyst", id: "business-analyst" },
-    { title: "Product Owner", id: "product-owner" },
-    { title: "CTO", id: "cto" }
-];
+  <script>
+    const roles = [
+      { title: "Data Engineer", id: "data-engineer" },
+      { title: "Machine Learning Researcher", id: "ml-researcher" },
+      { title: "Business Analyst", id: "business-analyst" },
+      { title: "Product Owner", id: "product-owner" },
+      { title: "CTO", id: "cto" }
+    ];
+    let roleIndex = 0;
+    let charIndex = 0;
+    let typing = true;
+    let typedText = document.getElementById("typed");
 
-let roleIndex = 0;
-let charIndex = 0;
-let typing = true;
-let typedText = document.getElementById("typed");
-
-function typeRole() {
-    const currentRole = roles[roleIndex].title;
-
-    if (typing) {
+    function typeRole() {
+      const currentRole = roles[roleIndex].title;
+      if (typing) {
         if (charIndex <= currentRole.length) {
-            typedText.innerHTML = currentRole.slice(0, charIndex++);
+          typedText.innerHTML = currentRole.slice(0, charIndex++);
         } else {
-            typing = false;
-            setTimeout(typeRole, 1000);
-            return;
+          typing = false;
+          setTimeout(typeRole, 1000);
+          return;
         }
-    } else {
+      } else {
         if (charIndex > 0) {
-            typedText.innerHTML = currentRole.slice(0, --charIndex);
+          typedText.innerHTML = currentRole.slice(0, --charIndex);
         } else {
-            typing = true;
-            roleIndex = (roleIndex + 1) % roles.length;
+          typing = true;
+          roleIndex = (roleIndex + 1) % roles.length;
         }
+      }
+      setTimeout(typeRole, typing ? 120 : 50);
     }
-    setTimeout(typeRole, typing ? 120 : 50);
-}
-typeRole();
+    typeRole();
 
-typedText.addEventListener("click", () => {
-    const sectionId = roles[roleIndex].id;
-    const target = document.getElementById(sectionId);
-    if (target) {
-        target.scrollIntoView({ behavior: 'smooth' });
-    }
-});
-</script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".animated-code").forEach(block => {
+        const lines = block.innerText.trim().split('\\n');
+        block.innerHTML = '';
+        lines.forEach((line, i) => {
+          const span = document.createElement('span');
+          span.textContent = line;
+          span.style.animationDelay = `${i * 0.3}s`;
+          block.appendChild(span);
+        });
+        hljs.highlightElement(block);
+      });
+    });
+  </script>
 </body>
 </html>
